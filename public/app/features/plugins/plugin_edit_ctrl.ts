@@ -1,6 +1,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import Remarkable from 'remarkable';
+import { getPluginSettings } from './PluginSettingsCache';
 
 export class PluginEditCtrl {
   model: any;
@@ -53,7 +54,7 @@ export class PluginEditCtrl {
         url: `plugins/${this.model.id}/edit?tab=config`,
       });
 
-      let hasDashboards = _.find(model.includes, { type: 'dashboard' });
+      const hasDashboards: any = _.find(model.includes, { type: 'dashboard' });
 
       if (hasDashboards) {
         this.navModel.main.children.push({
@@ -69,7 +70,7 @@ export class PluginEditCtrl {
 
     this.tab = this.$routeParams.tab || defaultTab;
 
-    for (let tab of this.navModel.main.children) {
+    for (const tab of this.navModel.main.children) {
       if (tab.id === this.tab) {
         tab.active = true;
       }
@@ -77,7 +78,7 @@ export class PluginEditCtrl {
   }
 
   init() {
-    return this.backendSrv.get(`/api/plugins/${this.pluginId}/settings`).then(result => {
+    return getPluginSettings(this.pluginId).then(result => {
       this.model = result;
       this.pluginIcon = this.getPluginIcon(this.model.type);
 
@@ -97,7 +98,9 @@ export class PluginEditCtrl {
 
   initReadme() {
     return this.backendSrv.get(`/api/plugins/${this.pluginId}/markdown/readme`).then(res => {
-      var md = new Remarkable();
+      const md = new Remarkable({
+        linkify: true,
+      });
       this.readmeHtml = this.$sce.trustAsHtml(md.render(res));
     });
   }
@@ -105,7 +108,7 @@ export class PluginEditCtrl {
   getPluginIcon(type) {
     switch (type) {
       case 'datasource':
-        return 'icon-gf icon-gf-datasources';
+        return 'gicon gicon-datasources';
       case 'panel':
         return 'icon-gf icon-gf-panel';
       case 'app':
@@ -113,7 +116,7 @@ export class PluginEditCtrl {
       case 'page':
         return 'icon-gf icon-gf-endpoint-tiny';
       case 'dashboard':
-        return 'icon-gf icon-gf-dashboard';
+        return 'gicon gicon-dashboard';
       default:
         return 'icon-gf icon-gf-apps';
     }
@@ -122,7 +125,7 @@ export class PluginEditCtrl {
   update() {
     this.preUpdateHook()
       .then(() => {
-        var updateCmd = _.extend(
+        const updateCmd = _.extend(
           {
             enabled: this.model.enabled,
             pinned: this.model.pinned,
@@ -152,7 +155,7 @@ export class PluginEditCtrl {
   }
 
   updateAvailable() {
-    var modalScope = this.$scope.$new(true);
+    const modalScope = this.$scope.$new(true);
     modalScope.plugin = this.model;
 
     this.$rootScope.appEvent('show-modal', {

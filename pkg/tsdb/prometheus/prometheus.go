@@ -70,7 +70,7 @@ func (e *PrometheusExecutor) getClient(dsInfo *models.DataSource) (apiv1.API, er
 		cfg.RoundTripper = basicAuthTransport{
 			Transport: e.Transport,
 			username:  dsInfo.BasicAuthUser,
-			password:  dsInfo.BasicAuthPassword,
+			password:  dsInfo.DecryptedBasicAuthPassword(),
 		}
 	}
 
@@ -92,12 +92,12 @@ func (e *PrometheusExecutor) Query(ctx context.Context, dsInfo *models.DataSourc
 		return nil, err
 	}
 
-	querys, err := parseQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
+	queries, err := parseQuery(dsInfo, tsdbQuery.Queries, tsdbQuery)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, query := range querys {
+	for _, query := range queries {
 		timeRange := apiv1.Range{
 			Start: query.Start,
 			End:   query.End,

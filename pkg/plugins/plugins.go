@@ -26,6 +26,7 @@ var (
 	Apps         map[string]*AppPlugin
 	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
+	Renderer     *RendererPlugin
 
 	GrafanaLatestVersion string
 	GrafanaHasUpdate     bool
@@ -58,6 +59,7 @@ func (pm *PluginManager) Init() error {
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
+		"renderer":   RendererPlugin{},
 	}
 
 	pm.log.Info("Starting plugin search")
@@ -119,7 +121,6 @@ func (pm *PluginManager) Run(ctx context.Context) error {
 			pm.checkForUpdates()
 		case <-ctx.Done():
 			run = false
-			break
 		}
 	}
 
@@ -168,7 +169,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	}
 
 	if f.Name() == "node_modules" {
-		return util.WalkSkipDir
+		return util.ErrWalkSkipDir
 	}
 
 	if f.IsDir() {

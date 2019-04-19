@@ -9,15 +9,16 @@ import (
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/go-ldap/ldap"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/ldap.v3"
 )
 
 type ILdapConn interface {
 	Bind(username, password string) error
+	UnauthenticatedBind(username string) error
 	Search(*ldap.SearchRequest) (*ldap.SearchResult, error)
 	StartTLS(*tls.Config) error
 	Close()
@@ -59,6 +60,13 @@ func (a *ldapAuther) Dial() error {
 			}
 		}
 	}
+	var clientCert tls.Certificate
+	if a.server.ClientCert != "" && a.server.ClientKey != "" {
+		clientCert, err = tls.LoadX509KeyPair(a.server.ClientCert, a.server.ClientKey)
+		if err != nil {
+			return err
+		}
+	}
 	for _, host := range strings.Split(a.server.Host, " ") {
 		address := fmt.Sprintf("%s:%d", host, a.server.Port)
 		if a.server.UseSSL {
@@ -66,6 +74,9 @@ func (a *ldapAuther) Dial() error {
 				InsecureSkipVerify: a.server.SkipVerifySSL,
 				ServerName:         host,
 				RootCAs:            certPool,
+			}
+			if len(clientCert.Certificate) > 0 {
+				tlsCfg.Certificates = append(tlsCfg.Certificates, clientCert)
 			}
 			if a.server.StartTLS {
 				a.conn, err = ldap.Dial("tcp", address)
@@ -163,6 +174,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 		Name:       fmt.Sprintf("%s %s", ldapUser.FirstName, ldapUser.LastName),
 		Login:      ldapUser.Username,
 		Email:      ldapUser.Email,
+		Groups:     ldapUser.MemberOf,
 		OrgRoles:   map[int64]m.RoleType{},
 	}
 
@@ -174,6 +186,9 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 
 		if ldapUser.isMemberOf(group.GroupDN) {
 			extUser.OrgRoles[group.OrgId] = group.OrgRole
+			if extUser.IsGrafanaAdmin == nil || !*extUser.IsGrafanaAdmin {
+				extUser.IsGrafanaAdmin = group.IsGrafanaAdmin
+			}
 		}
 	}
 
@@ -189,22 +204,33 @@ func (a *ldapAuther) GetGrafanaUserFor(ctx *m.ReqContext, ldapUser *LdapUserInfo
 	}
 
 	// add/update user in grafana
-	userQuery := &m.UpsertUserCommand{
+	upsertUserCmd := &m.UpsertUserCommand{
 		ReqContext:    ctx,
 		ExternalUser:  extUser,
 		SignupAllowed: setting.LdapAllowSignup,
 	}
-	err := bus.Dispatch(userQuery)
+
+	err := bus.Dispatch(upsertUserCmd)
 	if err != nil {
 		return nil, err
 	}
 
-	return userQuery.Result, nil
+	return upsertUserCmd.Result, nil
 }
 
 func (a *ldapAuther) serverBind() error {
+	bindFn := func() error {
+		return a.conn.Bind(a.server.BindDN, a.server.BindPassword)
+	}
+
+	if a.server.BindPassword == "" {
+		bindFn = func() error {
+			return a.conn.UnauthenticatedBind(a.server.BindDN)
+		}
+	}
+
 	// bind_dn and bind_password to bind
-	if err := a.conn.Bind(a.server.BindDN, a.server.BindPassword); err != nil {
+	if err := bindFn(); err != nil {
 		a.log.Info("LDAP initial bind failed, %v", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
@@ -244,7 +270,17 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 		bindPath = fmt.Sprintf(a.server.BindDN, username)
 	}
 
-	if err := a.conn.Bind(bindPath, userPassword); err != nil {
+	bindFn := func() error {
+		return a.conn.Bind(bindPath, userPassword)
+	}
+
+	if userPassword == "" {
+		bindFn = func() error {
+			return a.conn.UnauthenticatedBind(bindPath)
+		}
+	}
+
+	if err := bindFn(); err != nil {
 		a.log.Info("Initial bind failed", "error", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
@@ -258,24 +294,38 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 	return nil
 }
 
+func appendIfNotEmpty(slice []string, values ...string) []string {
+	for _, v := range values {
+		if v != "" {
+			slice = append(slice, v)
+		}
+	}
+	return slice
+}
+
 func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 	var searchResult *ldap.SearchResult
 	var err error
 
 	for _, searchBase := range a.server.SearchBaseDNs {
+		attributes := make([]string, 0)
+		inputs := a.server.Attr
+		attributes = appendIfNotEmpty(attributes,
+			inputs.Username,
+			inputs.Surname,
+			inputs.Email,
+			inputs.Name,
+			inputs.MemberOf)
+
 		searchReq := ldap.SearchRequest{
 			BaseDN:       searchBase,
 			Scope:        ldap.ScopeWholeSubtree,
 			DerefAliases: ldap.NeverDerefAliases,
-			Attributes: []string{
-				a.server.Attr.Username,
-				a.server.Attr.Surname,
-				a.server.Attr.Email,
-				a.server.Attr.Name,
-				a.server.Attr.MemberOf,
-			},
-			Filter: strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
+			Attributes:   attributes,
+			Filter:       strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
+
+		a.log.Debug("Ldap Search For User Request", "info", spew.Sdump(searchReq))
 
 		searchResult, err = a.conn.Search(&searchReq)
 		if err != nil {
@@ -308,19 +358,24 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			} else {
 				filter_replace = getLdapAttr(a.server.GroupSearchFilterUserAttribute, searchResult)
 			}
+
 			filter := strings.Replace(a.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
 
 			a.log.Info("Searching for user's groups", "filter", filter)
+
+			// support old way of reading settings
+			groupIdAttribute := a.server.Attr.MemberOf
+			// but prefer dn attribute if default settings are used
+			if groupIdAttribute == "" || groupIdAttribute == "memberOf" {
+				groupIdAttribute = "dn"
+			}
 
 			groupSearchReq := ldap.SearchRequest{
 				BaseDN:       groupSearchBase,
 				Scope:        ldap.ScopeWholeSubtree,
 				DerefAliases: ldap.NeverDerefAliases,
-				Attributes: []string{
-					// Here MemberOf would be the thing that identifies the group, which is normally 'cn'
-					a.server.Attr.MemberOf,
-				},
-				Filter: filter,
+				Attributes:   []string{groupIdAttribute},
+				Filter:       filter,
 			}
 
 			groupSearchResult, err = a.conn.Search(&groupSearchReq)
@@ -330,7 +385,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 
 			if len(groupSearchResult.Entries) > 0 {
 				for i := range groupSearchResult.Entries {
-					memberOf = append(memberOf, getLdapAttrN(a.server.Attr.MemberOf, groupSearchResult, i))
+					memberOf = append(memberOf, getLdapAttrN(groupIdAttribute, groupSearchResult, i))
 				}
 				break
 			}
@@ -348,7 +403,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 }
 
 func getLdapAttrN(name string, result *ldap.SearchResult, n int) string {
-	if name == "DN" {
+	if strings.ToLower(name) == "dn" {
 		return result.Entries[n].DN
 	}
 	for _, attr := range result.Entries[n].Attributes {

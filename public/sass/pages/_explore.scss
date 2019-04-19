@@ -1,323 +1,431 @@
+.icon-margin-right {
+  margin-right: 0.25em;
+}
+
+.icon-margin-left {
+  margin-left: 0.25em;
+}
+
+.run-icon {
+  transform: rotate(90deg);
+}
+
+.timepicker {
+  display: flex;
+}
+
+.timepicker-rangestring {
+  margin-left: 0.5em;
+}
+
+.datasource-picker {
+  .ds-picker {
+    min-width: 200px;
+    max-width: 200px;
+  }
+}
+
+.explore-toolbar {
+  background: inherit;
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+  height: auto;
+  padding: 0 $dashboard-padding;
+  border-bottom: 1px solid #0000;
+  transition-duration: 0.35s;
+  transition-timing-function: ease-in-out;
+  transition-property: box-shadow, border-bottom;
+}
+
+.explore-toolbar-item {
+  position: relative;
+  align-self: center;
+}
+
+.explore-toolbar.splitted {
+  .explore-toolbar-item {
+    flex: 1 1 100%;
+  }
+
+  .explore-toolbar-content-item:first-child {
+    padding-left: 0;
+    margin-right: auto;
+  }
+}
+
+.explore-toolbar-item:last-child {
+  flex: auto;
+}
+
+.explore-toolbar-header {
+  display: flex;
+  flex: 1 1 0;
+  flex-flow: row nowrap;
+  font-size: 18px;
+  min-height: 55px;
+  line-height: 55px;
+  justify-content: space-between;
+  margin-left: $space-xl;
+}
+
+.explore-toolbar-header {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.explore-toolbar-header-close {
+  margin-left: auto;
+  color: $text-color-weak;
+}
+
+.explore-toolbar-content {
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.explore-toolbar-content-item {
+  padding: 10px 2px;
+}
+
+.explore-toolbar-content-item:first-child {
+  padding-left: $dashboard-padding;
+  margin-right: auto;
+}
+
+@media only screen and (max-width: 1545px) {
+  .explore-toolbar.splitted {
+    .timepicker-rangestring {
+      display: none;
+    }
+  }
+}
+
+@media only screen and (max-width: 1070px) {
+  .timepicker {
+    .timepicker-rangestring {
+      display: none;
+    }
+  }
+
+  .explore-toolbar-content {
+    justify-content: flex-start;
+  }
+
+  .explore-toolbar.splitted {
+    .explore-toolbar-content-item {
+      padding: 2px 0;
+      margin: 0;
+    }
+  }
+
+  .explore-toolbar-content-item {
+    padding: 2px 2px;
+  }
+}
+
+@media only screen and (max-width: 803px) {
+  .btn-title {
+    display: none;
+  }
+}
+
+@media only screen and (max-width: 702px) {
+  .explore-toolbar-content-item:first-child {
+    padding-left: 2px;
+    margin-right: 0;
+  }
+}
+
+@media only screen and (max-width: 544px) {
+  .explore-toolbar-header-title {
+    .navbar-page-btn {
+      margin-left: $dashboard-padding;
+    }
+  }
+}
+
 .explore {
-  .graph-legend {
-    flex-wrap: wrap;
+  flex: 1 1 auto;
+}
+
+.explore + .explore {
+  border-left: 1px dotted $table-border;
+}
+
+.explore-container {
+  padding: $dashboard-padding;
+}
+
+.explore-wrapper {
+  display: flex;
+
+  > .explore-split {
+    width: 50%;
+  }
+}
+
+.explore-panel {
+  margin-top: $space-sm;
+}
+
+.explore-panel__body {
+  padding: $panel-padding;
+}
+
+.explore-panel__header {
+  padding: $space-sm $space-md 0 $space-md;
+  display: flex;
+  cursor: pointer;
+  margin-bottom: $space-sm;
+  transition: all 0.1s linear;
+}
+
+.explore-panel__header-label {
+  font-weight: 500;
+  margin-right: $space-sm;
+  font-size: $font-size-h6;
+  box-shadow: $text-shadow-faint;
+}
+
+.explore-panel__header-buttons {
+  margin-right: $space-sm;
+  font-size: $font-size-lg;
+  line-height: $font-size-h6;
+}
+
+.time-series-disclaimer {
+  width: 300px;
+  margin: $space-sm auto;
+  padding: 10px 0;
+  border-radius: $border-radius;
+  text-align: center;
+  background-color: $panel-bg;
+
+  .disclaimer-icon {
+    color: $yellow;
+    margin-right: $space-xs;
+  }
+
+  .show-all-time-series {
+    cursor: pointer;
+    color: $external-link-color;
+  }
+}
+
+.navbar .elapsed-time {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 48px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.graph-legend {
+  flex-wrap: wrap;
+}
+
+.explore-panel__loader {
+  height: 2px;
+  position: relative;
+  overflow: hidden;
+  background: none;
+  margin: $space-xs;
+}
+
+.explore-panel__loader--active:after {
+  content: ' ';
+  display: block;
+  width: 25%;
+  top: 0;
+  top: -50%;
+  height: 250%;
+  position: absolute;
+  animation: loader 2s cubic-bezier(0.17, 0.67, 0.83, 0.67) 500ms;
+  animation-iteration-count: 100;
+  left: -25%;
+  background: $blue;
+}
+
+@keyframes loader {
+  from {
+    left: -25%;
+    opacity: 0.1;
+  }
+  to {
+    left: 100%;
+    opacity: 1;
   }
 }
 
 .query-row {
+  display: flex;
   position: relative;
+  align-items: flex-start;
 
   & + & {
-    margin-top: 0.5rem;
+    margin-top: $space-sm;
   }
 }
 
 .query-row-tools {
+  white-space: nowrap;
+}
+
+.query-row-status {
   position: absolute;
-  left: -4rem;
-  top: 0.33rem;
-  > * {
-    margin-right: 0.25rem;
+  top: 0;
+  right: 105px;
+  z-index: 1015;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: $input-height;
+}
+
+.query-row-field {
+  margin-right: 3px;
+  flex-grow: 1;
+}
+
+.query-transactions {
+  display: table;
+}
+
+.query-transaction {
+  display: table-row;
+  color: $text-color-faint;
+  line-height: 1.44;
+}
+
+.query-transaction--loading {
+  animation: query-loading-color-change 1s alternate 100;
+}
+
+@keyframes query-loading-color-change {
+  from {
+    color: $text-color-faint;
+  }
+  to {
+    color: $blue;
   }
 }
 
-.query-field {
-  font-size: 14px;
-  font-family: Consolas, Menlo, Courier, monospace;
-  height: auto;
+.query-transaction__type,
+.query-transaction__duration {
+  display: table-cell;
+  font-size: $font-size-xs;
+  text-align: right;
+  padding-right: 0.25em;
 }
 
-.query-field-wrapper {
-  position: relative;
-  display: inline-block;
-  padding: 6px 7px 4px;
-  width: 100%;
-  cursor: text;
-  line-height: 1.5;
-  color: rgba(0, 0, 0, 0.65);
-  background-color: #fff;
-  background-image: none;
-  border: 1px solid lightgray;
-  border-radius: 3px;
-  transition: all 0.3s;
-}
+// Prometheus-specifics, to be extracted to datasource soon
 
 .explore {
-  .typeahead {
-    position: absolute;
-    z-index: auto;
-    top: -10000px;
-    left: -10000px;
-    opacity: 0;
-    border-radius: 4px;
-    transition: opacity 0.75s;
-    border: 1px solid #e4e4e4;
-    max-height: calc(66vh);
-    overflow-y: scroll;
-    max-width: calc(66%);
-    overflow-x: hidden;
-    outline: none;
-    list-style: none;
-    background: #fff;
-    color: rgba(0, 0, 0, 0.65);
-    transition: opacity 0.4s ease-out;
-  }
+  .prom-query-field-info {
+    margin: 0.25em 0.5em 0.5em;
+    display: flex;
 
-  .typeahead-group__title {
-    color: rgba(0, 0, 0, 0.43);
-    font-size: 12px;
-    line-height: 1.5;
-    padding: 8px 16px;
-  }
-
-  .typeahead-item {
-    line-height: 200%;
-    height: auto;
-    font-family: Consolas, Menlo, Courier, monospace;
-    padding: 0 16px 0 28px;
-    font-size: 12px;
-    text-overflow: ellipsis;
-    overflow: hidden;
-    margin-left: -1px;
-    left: 1px;
-    position: relative;
-    z-index: 1;
-    display: block;
-    white-space: nowrap;
-    cursor: pointer;
-    transition: color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), border-color 0.3s cubic-bezier(0.645, 0.045, 0.355, 1),
-      background 0.3s cubic-bezier(0.645, 0.045, 0.355, 1), padding 0.15s cubic-bezier(0.645, 0.045, 0.355, 1);
-  }
-
-  .typeahead-item__selected {
-    background-color: #ecf6fd;
-    color: #108ee9;
+    details {
+      margin-left: 1em;
+    }
   }
 }
 
-/* SYNTAX */
+// ReactTable basic overrides (does not include pivot/groups/filters)
+// When integrating ReactTable as new panel plugin, move to _panel_table.scss
 
-/**
- * prism.js Coy theme for JavaScript, CoffeeScript, CSS and HTML
- * Based on https://github.com/tshedor/workshop-wp-theme (Example: http://workshop.kansan.com/category/sessions/basics or http://workshop.timshedor.com/category/sessions/basics);
- * @author Tim  Shedor
- */
+.ReactTable {
+  border: none;
+}
 
-code[class*='language-'],
-pre[class*='language-'] {
-  color: black;
-  background: none;
-  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+.ReactTable .rt-table {
+  // Allow some space for the no-data text
+  min-height: 90px;
+}
+
+.ReactTable .rt-thead.-header {
+  box-shadow: none;
+  background: $list-item-bg;
+  border-top: 2px solid $body-bg;
+  border-bottom: 2px solid $body-bg;
+  height: 2em;
+}
+.ReactTable .rt-thead.-header .rt-th {
   text-align: left;
-  white-space: pre;
-  word-spacing: normal;
-  word-break: normal;
-  word-wrap: normal;
-  line-height: 1.5;
-
-  -moz-tab-size: 4;
-  -o-tab-size: 4;
-  tab-size: 4;
-
-  -webkit-hyphens: none;
-  -moz-hyphens: none;
-  -ms-hyphens: none;
-  hyphens: none;
+  color: $blue;
+  font-weight: 500;
+}
+.ReactTable .rt-thead .rt-td,
+.ReactTable .rt-thead .rt-th {
+  padding: 0.45em 0 0.45em 1.1em;
+  border-right: none;
+  box-shadow: none;
+}
+.ReactTable .rt-tbody .rt-td {
+  padding: 0.45em 0 0.45em 1.1em;
+  border-bottom: 2px solid $body-bg;
+  border-right: 2px solid $body-bg;
+}
+.ReactTable .rt-tbody .rt-td:last-child {
+  border-right: none;
+}
+.ReactTable .-pagination {
+  border-top: none;
+  box-shadow: none;
+  margin-top: $space-sm;
+}
+.ReactTable .-pagination .-btn {
+  color: $blue;
+  background: $list-item-bg;
+}
+.ReactTable .-pagination input,
+.ReactTable .-pagination select {
+  color: $input-color;
+  background-color: $input-bg;
+}
+.ReactTable .-loading {
+  background: $input-bg;
+}
+.ReactTable .-loading.-active {
+  opacity: 0.8;
+}
+.ReactTable .-loading > div {
+  color: $input-color;
+}
+.ReactTable .rt-tr .rt-td:last-child {
+  text-align: right;
+}
+.ReactTable .rt-noData {
+  top: 60px;
+  z-index: inherit;
 }
 
-/* Code blocks */
-pre[class*='language-'] {
-  position: relative;
-  margin: 0.5em 0;
-  overflow: visible;
-  padding: 0;
-}
-pre[class*='language-'] > code {
-  position: relative;
-  border-left: 10px solid #358ccb;
-  box-shadow: -1px 0px 0px 0px #358ccb, 0px 0px 0px 1px #dfdfdf;
-  background-color: #fdfdfd;
-  background-image: linear-gradient(transparent 50%, rgba(69, 142, 209, 0.04) 50%);
-  background-size: 3em 3em;
-  background-origin: content-box;
-  background-attachment: local;
-}
+// React-component cascade fix: show "loading" even though item can expand
 
-code[class*='language'] {
-  max-height: inherit;
-  height: inherit;
-  padding: 0 1em;
-  display: block;
-  overflow: auto;
-}
-
-/* Margin bottom to accomodate shadow */
-:not(pre) > code[class*='language-'],
-pre[class*='language-'] {
-  background-color: #fdfdfd;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-  margin-bottom: 1em;
-}
-
-/* Inline code */
-:not(pre) > code[class*='language-'] {
-  position: relative;
-  padding: 0.2em;
-  border-radius: 0.3em;
-  color: #c92c2c;
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  display: inline;
-  white-space: normal;
-}
-
-pre[class*='language-']:before,
-pre[class*='language-']:after {
-  content: '';
-  z-index: -2;
-  display: block;
+.rc-cascader-menu-item-loading:after {
   position: absolute;
-  bottom: 0.75em;
-  left: 0.18em;
-  width: 40%;
-  height: 20%;
-  max-height: 13em;
-  box-shadow: 0px 13px 8px #979797;
-  -webkit-transform: rotate(-2deg);
-  -moz-transform: rotate(-2deg);
-  -ms-transform: rotate(-2deg);
-  -o-transform: rotate(-2deg);
-  transform: rotate(-2deg);
-}
-
-:not(pre) > code[class*='language-']:after,
-pre[class*='language-']:after {
-  right: 0.75em;
-  left: auto;
-  -webkit-transform: rotate(2deg);
-  -moz-transform: rotate(2deg);
-  -ms-transform: rotate(2deg);
-  -o-transform: rotate(2deg);
-  transform: rotate(2deg);
-}
-
-.token.comment,
-.token.block-comment,
-.token.prolog,
-.token.doctype,
-.token.cdata {
-  color: #7d8b99;
-}
-
-.token.punctuation {
-  color: #5f6364;
-}
-
-.token.property,
-.token.tag,
-.token.boolean,
-.token.number,
-.token.function-name,
-.token.constant,
-.token.symbol,
-.token.deleted {
-  color: #c92c2c;
-}
-
-.token.selector,
-.token.attr-name,
-.token.string,
-.token.char,
-.token.function,
-.token.builtin,
-.token.inserted {
-  color: #2f9c0a;
-}
-
-.token.operator,
-.token.entity,
-.token.url,
-.token.variable {
-  color: #a67f59;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.token.atrule,
-.token.attr-value,
-.token.keyword,
-.token.class-name {
-  color: #1990b8;
-}
-
-.token.regex,
-.token.important {
-  color: #e90;
-}
-
-.language-css .token.string,
-.style .token.string {
-  color: #a67f59;
-  background: rgba(255, 255, 255, 0.5);
-}
-
-.token.important {
-  font-weight: normal;
-}
-
-.token.bold {
-  font-weight: bold;
-}
-.token.italic {
+  right: 12px;
+  content: 'loading';
+  color: #767980;
   font-style: italic;
 }
 
-.token.entity {
-  cursor: help;
+// TODO Experimental
+
+.cheat-sheet-item {
+  margin: $space-lg 0;
+  width: 50%;
 }
 
-.namespace {
-  opacity: 0.7;
+.cheat-sheet-item__title {
+  font-size: $font-size-h3;
 }
 
-@media screen and (max-width: 767px) {
-  pre[class*='language-']:before,
-  pre[class*='language-']:after {
-    bottom: 14px;
-    box-shadow: none;
-  }
-}
-
-/* Plugin styles */
-.token.tab:not(:empty):before,
-.token.cr:before,
-.token.lf:before {
-  color: #e0d7d1;
-}
-
-/* Plugin styles: Line Numbers */
-pre[class*='language-'].line-numbers {
-  padding-left: 0;
-}
-
-pre[class*='language-'].line-numbers code {
-  padding-left: 3.8em;
-}
-
-pre[class*='language-'].line-numbers .line-numbers-rows {
-  left: 0;
-}
-
-/* Plugin styles: Line Highlight */
-pre[class*='language-'][data-line] {
-  padding-top: 0;
-  padding-bottom: 0;
-  padding-left: 0;
-}
-pre[data-line] code {
-  position: relative;
-  padding-left: 4em;
-}
-pre .line-highlight {
-  margin-top: 0;
+.cheat-sheet-item__expression {
+  margin: $space-xs 0;
+  cursor: pointer;
 }
